@@ -288,7 +288,7 @@ class Schemas(object):
             "limited": {"type": "boolean"},
             "prev_batch": {"type": "string"},
         },
-        "required": ["events", "limited", "prev_batch"],
+        "required": [],
     }
 
     sync = {
@@ -376,10 +376,6 @@ class Schemas(object):
                                     },
                                 },
                                 "required": [
-                                    "timeline",
-                                    "state",
-                                    "ephemeral",
-                                    "account_data",
                                 ]
                             }
                         },
@@ -396,7 +392,7 @@ class Schemas(object):
                                         "properties": {
                                             "events": {"type": "array"}
                                         },
-                                        "required": ["events"]
+                                        "required": []
                                     },
                                     "state": {
                                         "type": "object",
@@ -406,7 +402,7 @@ class Schemas(object):
                                         "required": ["events"]
                                     }
                                 },
-                                "required": ["timeline", "state"]
+                                "required": []
                             }
                         },
                         "additionalProperties": False,
@@ -423,10 +419,6 @@ class Schemas(object):
         },
         "required": [
             "next_batch",
-            "device_one_time_keys_count",
-            "device_lists",
-            "rooms",
-            "to_device",
         ],
     }
 
@@ -1068,7 +1060,6 @@ class Schemas(object):
         "required": [
             "start",
             "end",
-            "state",
             "events_before",
             "events_after",
             "event",
@@ -1282,11 +1273,11 @@ class Schemas(object):
                         "avatar_url": {"type": ["string", "null"]},
                         "display_name": {"type": ["string", "null"]},
                     },
-                    "required": ["display_name"]
+                    "required": []
                 }}
             }
         },
-        "required": ["joined"]
+        "required": []
     }
 
     joined_rooms = {

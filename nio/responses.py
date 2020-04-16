@@ -235,7 +235,7 @@ class Device(object):
 
         return cls(
             parsed_dict["device_id"],
-            parsed_dict["display_name"],
+            parsed_dict.get("display_name", None),
             parsed_dict["last_seen_ip"],
             date
         )
@@ -611,7 +611,7 @@ class JoinedMembersResponse(Response):
         # type: (...) -> Union[JoinedMembersResponse, ErrorResponse]
         members = []
 
-        for user_id, user_info in parsed_dict["joined"].items():
+        for user_id, user_info in parsed_dict.get("joined", {}).items():
             user = RoomMember(
                 user_id,
                 user_info.get("display_name", None),
@@ -1357,7 +1357,7 @@ class RoomContextResponse(Response):
         event = Event.parse_event(parsed_dict["event"])
 
         _, state = SyncResponse._get_room_events(
-            parsed_dict["state"]
+            parsed_dict.get("state", [])
         )
 
         return cls(room_id, parsed_dict["start"], parsed_dict["end"],
@@ -1428,12 +1428,12 @@ class _SyncResponse(Response):
         validate_json(parsed_dict, Schemas.room_timeline)
 
         counter, events = _SyncResponse._get_room_events(
-            parsed_dict["events"],
+            parsed_dict.get("events", []),
             max_events
         )
 
         return counter, Timeline(
-            events, parsed_dict["limited"], parsed_dict["prev_batch"]
+            events, parsed_dict.get("limited", False), parsed_dict.get("prev_batch", None)
         )
 
     @staticmethod
@@ -1545,32 +1545,32 @@ class _SyncResponse(Response):
     def _get_room_info(parsed_dict, max_events=0):
         # type: (Dict[Any, Any], int) -> Tuple[Rooms, Dict[str, RoomInfo]]
         joined_rooms = {
-            key: None for key in parsed_dict["join"].keys()
+            key: None for key in parsed_dict.get("join", {}).keys()
         }  # type: Dict[str, Optional[RoomInfo]]
         invited_rooms = {}  # type: Dict[str, InviteInfo]
         left_rooms = {}     # type: Dict[str, RoomInfo]
         unhandled_rooms = {}
 
-        for room_id, room_dict in parsed_dict["invite"].items():
+        for room_id, room_dict in parsed_dict.get("invite", {}).items():
             state = _SyncResponse._get_invite_state(room_dict["invite_state"])
             invite_info = InviteInfo(state)
             invited_rooms[room_id] = invite_info
 
-        for room_id, room_dict in parsed_dict["leave"].items():
-            _, state = _SyncResponse._get_state(room_dict["state"])
-            _, timeline = _SyncResponse._get_timeline(room_dict["timeline"])
+        for room_id, room_dict in parsed_dict.get("leave", {}).items():
+            _, state = _SyncResponse._get_state(room_dict.get("state", {}))
+            _, timeline = _SyncResponse._get_timeline(room_dict.get("timeline", {}))
             leave_info = RoomInfo(timeline, state, [], [])
             left_rooms[room_id] = leave_info
 
-        for room_id, room_dict in parsed_dict["join"].items():
+        for room_id, room_dict in parsed_dict.get("join", {}).items():
             join_info, unhandled_info = _SyncResponse._get_join_info(
-                room_dict["state"]["events"],
-                room_dict["timeline"]["events"],
-                room_dict["timeline"]["prev_batch"],
-                room_dict["timeline"]["limited"],
-                room_dict["ephemeral"]["events"],
+                room_dict.get("state", {}).get("events", []),
+                room_dict.get("timeline", {}).get("events", []),
+                room_dict.get("timeline", {}).get("prev_batch", None),
+                room_dict.get("timeline", {}).get("limited", False),
+                room_dict.get("ephemeral", {}).get("events", []),
                 room_dict.get("summary", {}),
-                room_dict["account_data"]["events"],
+                room_dict.get("account_data", {}).get("events", []),
                 max_events
             )
 
@@ -1589,21 +1589,21 @@ class _SyncResponse(Response):
         max_events=0,  # type: int
     ):
         # type: (...) -> Union[SyncType, ErrorResponse]
-        to_device = cls._get_to_device(parsed_dict["to_device"])
+        to_device = cls._get_to_device(parsed_dict.get("to_device", {"events": {}}))
 
-        key_count_dict = parsed_dict["device_one_time_keys_count"]
+        key_count_dict = parsed_dict.get("device_one_time_keys_count", {})
         key_count = DeviceOneTimeKeyCount(
-            key_count_dict["curve25519"],
-            key_count_dict["signed_curve25519"]
+            key_count_dict.get("curve25519", 0),
+            key_count_dict.get("signed_curve25519", 0)
         )
 
         devices = DeviceList(
-            parsed_dict["device_lists"]["changed"],
-            parsed_dict["device_lists"]["left"],
+            parsed_dict.get("device_lists", {}).get("changed", []),
+            parsed_dict.get("device_lists", {}).get("left", []),
         )
 
         rooms, unhandled_rooms = _SyncResponse._get_room_info(
-            parsed_dict["rooms"], max_events)
+            parsed_dict.get("rooms", {}), max_events)
 
         if unhandled_rooms:
             return PartialSyncResponse(
